@@ -168,5 +168,5 @@ func spinner() pterm.SpinnerPrinter {
 }
 
 func (s *pTermStep) minimumLag() time.Duration {
-	return s.printer.Delay + time.Millisecond*150
+	return s.printer.Delay + time.Millisecond*5
 }
