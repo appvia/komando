@@ -17,7 +17,6 @@
 package komando
 
 import (
-	"strings"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -34,10 +33,10 @@ func newPtermStepGroup() *pTermStepGroup {
 
 func (g *pTermStepGroup) Add(msg string) Step {
 	step := newPTermStep(msg, g)
+	g.steps = append(g.steps, step)
 	if !g.stepActive {
 		step.start()
 	}
-	g.steps = append(g.steps, step)
 	return step
 }
 
@@ -47,8 +46,8 @@ func (g *pTermStepGroup) Done() {
 }
 
 func (g *pTermStepGroup) next(index int) {
-	if len(g.steps) > index+1 {
-		g.steps[index+1].start()
+	if len(g.steps) >= index+1 {
+		g.steps[index].start()
 	}
 }
 
@@ -58,82 +57,38 @@ type pTermStep struct {
 	index   int
 }
 
-func (s *pTermStep) start() {
-	s.printer.IsActive = true
-
-	go func() {
-		for s.printer.IsActive {
-			for _, seq := range s.printer.Sequence {
-				if s.printer.IsActive {
-					pterm.Printo(s.printer.Style.Sprint(seq) + " " + s.printer.MessageStyle.Sprint(s.printer.Text))
-					time.Sleep(s.printer.Delay)
-				}
-			}
-		}
-	}()
-}
-
 func newPTermStep(msg string, sg *pTermStepGroup) *pTermStep {
 	index := len(sg.steps) + 1
 	printer := spinner().WithText(msg)
 	return &pTermStep{sg: sg, printer: printer, index: index}
 }
 
-func (s *pTermStep) Error(a ...interface{}) {
-	time.Sleep(s.minimumLag())
-
-	if s.printer.FailPrinter == nil {
-		s.printer.FailPrinter = &pterm.Error
-	}
-
-	if len(a) == 0 {
-		a = []interface{}{s.printer.Text}
-	}
-	clearLine()
-	pterm.Printo(s.printer.FailPrinter.Sprint(a...))
-	_ = s.printer.Stop()
-	s.sg.stepActive = false
+func (s *pTermStep) start() {
+	s.printer, _ = s.printer.Start()
+	s.sg.stepActive = true
 }
 
-func clearLine() {
-	pterm.Printo(strings.Repeat(" ", pterm.GetTerminalWidth()))
+func (s *pTermStep) Error(a ...interface{}) {
+	time.Sleep(s.minimumLag())
+	s.printer.Fail(a...)
+	s.sg.stepActive = false
 }
 
 func (s *pTermStep) Success(a ...interface{}) {
 	time.Sleep(s.minimumLag())
-
-	if s.printer.SuccessPrinter == nil {
-		s.printer.SuccessPrinter = &pterm.Success
-	}
-
-	if len(a) == 0 {
-		a = []interface{}{s.printer.Text}
-	}
-	clearLine()
-	pterm.Printo(s.printer.SuccessPrinter.Sprint(a...))
-	_ = s.printer.Stop()
+	s.printer.Success(a...)
 	s.sg.stepActive = false
-
 	s.sg.next(s.index)
 }
 
 func (s *pTermStep) Warning(a ...interface{}) {
 	time.Sleep(s.minimumLag())
 
-	if s.printer.WarningPrinter == nil {
-		s.printer.WarningPrinter = &pterm.Warning
-	}
-
-	if len(a) == 0 {
-		a = []interface{}{s.printer.Text}
-	}
-	clearLine()
-	pterm.Printo(s.printer.WarningPrinter.Sprint(a...))
-	_ = s.printer.Stop()
+	s.printer.Warning(a...)
 	s.sg.stepActive = false
-
 	s.sg.next(s.index)
 }
+
 func spinner() pterm.SpinnerPrinter {
 	var spinnerSequences = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 
@@ -168,5 +123,5 @@ func spinner() pterm.SpinnerPrinter {
 }
 
 func (s *pTermStep) minimumLag() time.Duration {
-	return s.printer.Delay + time.Millisecond*5
+	return s.printer.Delay + time.Millisecond * 5
 }
