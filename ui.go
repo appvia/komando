@@ -82,7 +82,7 @@ func WithErrorBoldStyle() Option {
 	}
 }
 
-// WithErrorBoldStyle configures output using the a style
+// WithStyle configures output using a style
 func WithStyle(style string) Option {
 	return func(c *config) {
 		c.Style = style
@@ -125,7 +125,7 @@ type UI interface {
 	// you must take care that there is only ever one writer.
 	OutputWriters() (stdout, stderr io.Writer, err error)
 
-	// Output a header style value to the screen
+	// Header outputs a header style value to the screen
 	Header(msg string, opts ...Option)
 
 	NamedValues(rows []NamedValue, opts ...Option)
@@ -138,19 +138,19 @@ type UI interface {
 }
 
 type StepGroup interface {
-	// Start a step in the output with the arguments making up the initial message
+	// Add starts a step in the output with the arguments making up the initial message
 	Add(string) Step
-	// Marks the StepGroup as done
+	// Done marks the StepGroup as done
 	Done()
 }
 
 type Step interface {
-	// Completes a step marking it as successful, and starts the next step if there are any more steps.
+	// Success completes a step marking it as successful, and starts the next step if there are any more steps.
 	Success(a ...interface{})
 
-	// Completes a step marking it as a warning, and starts the next step if there are any more steps.
+	// Warning completes a step marking it as a warning, and starts the next step if there are any more steps.
 	Warning(a ...interface{})
 
-	// Completes a step marking it as an error, stops execution of an next steps.
+	// Error completes a step marking it as an error, stops execution of an next steps.
 	Error(a ...interface{})
 }
