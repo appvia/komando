@@ -97,6 +97,8 @@ func spinner() pterm.SpinnerPrinter {
 		Style:        pterm.NewStyle(pterm.FgDefault),
 		Delay:        time.Millisecond * 100,
 		MessageStyle: &pterm.Style{pterm.FgDefault},
+		ShowTimer:    false,
+		TimerStyle:   &pterm.Style{pterm.FgDefault},
 		SuccessPrinter: &pterm.PrefixPrinter{
 			MessageStyle: &pterm.ThemeDefault.SuccessMessageStyle,
 			Prefix: pterm.Prefix{
@@ -123,5 +125,5 @@ func spinner() pterm.SpinnerPrinter {
 }
 
 func (s *pTermStep) minimumLag() time.Duration {
-	return s.printer.Delay + time.Millisecond * 5
+	return s.printer.Delay + time.Millisecond*5
 }
